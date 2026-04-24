@@ -1,43 +1,21 @@
-
 import fs from "fs"
 
-const DB_PATH = "./api/database/users.json"
+const DB = "./api/database/users.json"
 
 export function auth(req, res, next) {
   const key = req.query.apikey
+  if (!key) return res.status(401).json({ error: "API key obrigatória" })
 
-  if (!key) {
-    return res.status(401).json({
-      status: false,
-      error: "API KEY obrigatória"
-    })
-  }
-
-  const users = JSON.parse(fs.readFileSync(DB_PATH))
+  const users = JSON.parse(fs.readFileSync(DB))
   const user = users.find(u => u.apikey === key)
 
-  if (!user) {
-    return res.status(403).json({
-      status: false,
-      error: "API KEY inválida"
-    })
-  }
+  if (!user) return res.status(403).json({ error: "Key inválida" })
+  if (user.used >= user.limit)
+    return res.status(429).json({ error: "Limite atingido" })
 
-  if (user.used >= user.limit) {
-    return res.status(429).json({
-      status: false,
-      error: "Limite atingido"
-    })
-  }
+  user.used++
+  fs.writeFileSync(DB, JSON.stringify(users, null, 2))
 
-  // aumenta uso
-  user.used += 1
-
-  // salva
-  fs.writeFileSync(DB_PATH, JSON.stringify(users, null, 2))
-
-  // injeta user na req
   req.user = user
-
   next()
 }
