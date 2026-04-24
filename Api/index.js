@@ -11,20 +11,15 @@ const app = express()
 
 app.use(express.json())
 
-// Middlewares globais
-app.use(rateLimit)
+// protege tudo
 app.use(auth)
-
-// Rotas
-app.use("/dashboard", dashboard)
-app.use("/download", downloads)
-app.use("/consultas", consultas)
 
 app.get("/", (req, res) => {
   res.json({
     status: true,
-    name: "NewGen API",
-    online: true
+    user: req.user.name,
+    plano: req.user.plan,
+    uso: `${req.user.used}/${req.user.limit}`
   })
 })
 
